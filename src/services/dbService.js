@@ -159,42 +159,42 @@ export async function syncFromCloud(force = false) {
   try {
     let remoteMovies = null;
 
-    // Try fetching via Raw GitHub CDN with cache busting
+    // 1. Try instantaneous GitHub Contents API (0 second cache delay for instant mobile sync)
     try {
-      const rawRes = await fetch(`${GITHUB_RAW_URL}?nocache=${Date.now()}`, {
+      const apiRes = await fetch(GITHUB_REPO_API, {
         method: 'GET',
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
+          'Accept': 'application/vnd.github+json'
         }
       });
-      if (rawRes.ok) {
-        const rawData = await rawRes.json();
-        remoteMovies = rawData?.movies || (Array.isArray(rawData) ? rawData : null);
+      if (apiRes.ok) {
+        const apiData = await apiRes.json();
+        if (apiData?.content) {
+          const decoded = decodeURIComponent(escape(atob(apiData.content.replace(/\s/g, ''))));
+          const parsed = JSON.parse(decoded);
+          remoteMovies = parsed?.movies || (Array.isArray(parsed) ? parsed : null);
+        }
       }
     } catch (e) {
-      console.warn('Raw CDN fetch failed, trying API fallback:', e);
+      console.warn('GitHub Contents API fetch failed, trying raw CDN:', e);
     }
 
-    // Fallback to GitHub Contents API if raw is not yet refreshed
+    // 2. Fallback to Raw GitHub CDN with cache busting
     if (!Array.isArray(remoteMovies) || remoteMovies.length === 0) {
       try {
-        const apiRes = await fetch(GITHUB_REPO_API, {
+        const rawRes = await fetch(`${GITHUB_RAW_URL}?nocache=${Date.now()}`, {
           method: 'GET',
           headers: {
-            'Accept': 'application/vnd.github+json'
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
           }
         });
-        if (apiRes.ok) {
-          const apiData = await apiRes.json();
-          if (apiData?.content) {
-            const decoded = decodeURIComponent(escape(atob(apiData.content.replace(/\s/g, ''))));
-            const parsed = JSON.parse(decoded);
-            remoteMovies = parsed?.movies || (Array.isArray(parsed) ? parsed : null);
-          }
+        if (rawRes.ok) {
+          const rawData = await rawRes.json();
+          remoteMovies = rawData?.movies || (Array.isArray(rawData) ? rawData : null);
         }
       } catch (e) {
-        console.warn('GitHub Contents API fallback error:', e);
+        console.warn('Raw CDN fetch failed:', e);
       }
     }
 
