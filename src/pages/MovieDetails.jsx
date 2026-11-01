@@ -31,6 +31,7 @@ export default function MovieDetails({
   onNavigate,
   onPlayTrailer,
   onOpenDownload,
+  onOpenUpload,
   watchlist = [],
   onToggleWatchlist
 }) {
@@ -225,19 +226,17 @@ export default function MovieDetails({
                 </button>
               )}
 
-              {/* Admin Direct Upload Action */}
-              {authService.getCurrentUser()?.role === 'admin' && (
-                <button
-                  onClick={() => {
-                    audioService.playClick();
-                    onOpenDownload(movie);
-                  }}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl bg-cine-purple/15 hover:bg-cine-purple/25 text-cine-purple border border-cine-purple/30 text-xs font-semibold transition-all hover:scale-[1.01]"
-                >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span>Admin: Upload / Manage Movie Files</span>
-                </button>
-              )}
+              {/* Upload Movie from Mac Action Button */}
+              <button
+                onClick={() => {
+                  audioService.playClick();
+                  onOpenUpload ? onOpenUpload(movie) : onOpenDownload(movie);
+                }}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-cine-purple/20 hover:bg-cine-purple/30 text-cine-purple border border-cine-purple/40 text-xs font-semibold transition-all hover:scale-[1.02] active:scale-95 shadow-glow-purple"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Upload Movie from Mac Downloads</span>
+              </button>
 
               {/* Utility Row: Watchlist, Favorite, Share */}
               <div className="grid grid-cols-3 gap-2 pt-1">

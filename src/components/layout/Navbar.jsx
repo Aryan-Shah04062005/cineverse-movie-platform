@@ -14,7 +14,8 @@ import {
   Sun,
   Moon,
   Star,
-  LogOut
+  LogOut,
+  Upload
 } from 'lucide-react';
 import { audioService } from '../../services/audioService';
 import { authService } from '../../services/authService';
@@ -25,7 +26,8 @@ export default function Navbar({
   movies = [],
   onOpenLogin,
   isDarkMode,
-  onToggleTheme
+  onToggleTheme,
+  onOpenUpload
 }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -250,6 +252,19 @@ export default function Navbar({
             {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-cine-purple" />}
           </button>
 
+          {/* Quick Upload from Mac Action Button */}
+          <button
+            onClick={() => {
+              audioService.playClick();
+              onOpenUpload?.();
+            }}
+            title="Upload movie file from your Mac Downloads (~/Downloads)"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-cine-purple to-cine-red hover:from-purple-500 hover:to-rose-500 text-white font-semibold text-xs shadow-glow-purple hover:scale-105 active:scale-95 transition-all"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Upload from Mac</span>
+          </button>
+
           {/* User Account / Profile Button */}
           <div className="relative">
             {currentUser ? (
@@ -294,6 +309,18 @@ export default function Navbar({
                 </div>
 
                 <div className="py-1">
+                  <button
+                    onClick={() => {
+                      audioService.playClick();
+                      setIsProfileOpen(false);
+                      onOpenUpload?.();
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs text-cine-purple hover:bg-white/10 rounded-lg transition-colors flex items-center gap-2 font-medium"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload Movie (~/Downloads)</span>
+                  </button>
+
                   <button
                     onClick={() => {
                       audioService.playClick();
@@ -366,6 +393,24 @@ export default function Navbar({
           </div>
 
           <div className="space-y-1">
+            {/* Quick Upload from Mac in Mobile Drawer */}
+            <button
+              onClick={() => {
+                audioService.playClick();
+                setIsMobileMenuOpen(false);
+                onOpenUpload?.();
+              }}
+              className="w-full flex items-center justify-between p-3 rounded-xl text-xs font-semibold bg-gradient-to-r from-cine-purple/20 to-cine-red/20 text-white border border-cine-purple/40 mb-2"
+            >
+              <div className="flex items-center gap-3">
+                <Upload className="w-4 h-4 text-cine-purple" />
+                <span>Upload Movie from Mac Downloads</span>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-cine-purple/30 text-cine-purple">
+                ~/Downloads
+              </span>
+            </button>
+
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = currentRoute === link.id;

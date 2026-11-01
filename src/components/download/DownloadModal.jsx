@@ -17,11 +17,14 @@ import {
   Plus,
   Trash2,
   Sparkles,
-  Check
+  Check,
+  Smartphone,
+  Laptop
 } from 'lucide-react';
 import { audioService } from '../../services/audioService';
 import { dbService } from '../../services/dbService';
 import { authService } from '../../services/authService';
+import { mediaStorageService } from '../../services/mediaStorageService';
 import { useToast } from '../common/Toast';
 
 export default function DownloadModal({ movie, onClose }) {
@@ -31,10 +34,10 @@ export default function DownloadModal({ movie, onClose }) {
   const isAdmin = currentUser?.role === 'admin';
 
   const [selectedResolution, setSelectedResolution] = useState(null);
-  const [confirmedLicense, setConfirmedLicense] = useState(false);
+  const [confirmedLicense, setConfirmedLicense] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
-  const [downloadSpeed, setDownloadSpeed] = useState('18.4 MB/s');
+  const [downloadSpeed, setDownloadSpeed] = useState('24.2 MB/s');
   const [isPaused, setIsPaused] = useState(false);
   const [downloadCompleted, setDownloadCompleted] = useState(false);
 
@@ -49,12 +52,37 @@ export default function DownloadModal({ movie, onClose }) {
   const [uploadedFileName, setUploadedFileName] = useState('');
   const fileInputRef = useRef(null);
 
+  // Resolve object URLs from IndexedDB if file was uploaded locally
   useEffect(() => {
-    setCurrentMovie(movie);
-    if (movie?.downloadFiles && movie.downloadFiles.length > 0) {
-      const def = movie.downloadFiles.find(f => f.resolution.includes('1080')) || movie.downloadFiles[0];
-      setSelectedResolution(def);
+    let isMounted = true;
+    async function resolveUrls() {
+      if (movie?.downloadFiles && movie.downloadFiles.length > 0) {
+        const resolvedFiles = await Promise.all(
+          movie.downloadFiles.map(async (file) => {
+            if (file.storageFileId) {
+              const stored = await mediaStorageService.getMovieFile(file.storageFileId);
+              if (stored && stored.url) {
+                return { ...file, url: stored.url };
+              }
+            }
+            return file;
+          })
+        );
+        if (isMounted) {
+          setCurrentMovie({ ...movie, downloadFiles: resolvedFiles });
+          const def = resolvedFiles.find((f) => f.resolution.includes('1080')) || resolvedFiles[0];
+          setSelectedResolution(def);
+        }
+      } else {
+        if (isMounted) {
+          setCurrentMovie(movie);
+        }
+      }
     }
+    resolveUrls();
+    return () => {
+      isMounted = false;
+    };
   }, [movie]);
 
   useEffect(() => {
@@ -87,13 +115,10 @@ export default function DownloadModal({ movie, onClose }) {
       setUploadBitrate('22.0 Mbps');
     } else if (lowerName.includes('720')) {
       setUploadRes('720p');
-      setUploadBitrate('3.8 Mbps');
     } else if (lowerName.includes('480')) {
       setUploadRes('480p');
-      setUploadBitrate('1.8 Mbps');
     } else {
       setUploadRes('1080p');
-      setUploadBitrate('8.5 Mbps');
     }
 
     if (lowerName.endsWith('.mkv')) {
@@ -102,7 +127,6 @@ export default function DownloadModal({ movie, onClose }) {
       setUploadFormat('MP4 (H.264)');
     }
 
-    // Create object URL for local playback/download or fallback URL
     const localUrl = URL.createObjectURL(file);
     setUploadUrl(localUrl);
 
@@ -129,8 +153,7 @@ export default function DownloadModal({ movie, onClose }) {
     };
 
     const existingFiles = currentMovie.downloadFiles || [];
-    // Replace if resolution already exists, else append
-    const updatedFiles = existingFiles.filter(f => f.resolution !== uploadRes);
+    const updatedFiles = existingFiles.filter((f) => f.resolution !== uploadRes);
     updatedFiles.unshift(newDownloadFile);
 
     const updatedMovie = dbService.updateMovie(currentMovie.id, {
@@ -155,7 +178,7 @@ export default function DownloadModal({ movie, onClose }) {
   const handleDeleteFile = (resolution) => {
     if (!confirm(`Delete ${resolution} download file option for "${currentMovie.title}"?`)) return;
     const existing = currentMovie.downloadFiles || [];
-    const filtered = existing.filter(f => f.resolution !== resolution);
+    const filtered = existing.filter((f) => f.resolution !== resolution);
     const updated = dbService.updateMovie(currentMovie.id, {
       downloadFiles: filtered,
       downloadAuthorized: filtered.length > 0
@@ -172,13 +195,61 @@ export default function DownloadModal({ movie, onClose }) {
     }
   };
 
-  // Live Download Simulation
+  // Direct 1-tap browser file download trigger for Laptops & Phones
+  const triggerDirectDeviceDownload = (targetFile = selectedResolution) => {
+    if (!confirmedLicense) {
+      addToast({
+        type: 'warning',
+        title: 'Confirmation Required',
+        message: 'Please review and accept the legal authorization confirmation below.'
+      });
+      return;
+    }
+
+    const fileToDownload = targetFile || currentMovie.downloadFiles?.[0];
+    if (!fileToDownload || !fileToDownload.url) {
+      addToast({
+        type: 'error',
+        title: 'File Unavailable',
+        message: 'No download URL available for this selection.'
+      });
+      return;
+    }
+
+    audioService.playSuccess();
+    dbService.recordDownload(currentMovie.id, fileToDownload.resolution);
+
+    const safeTitle = (currentMovie.title || 'Movie').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const ext = fileToDownload.format?.toLowerCase().includes('mkv') ? 'mkv' : 'mp4';
+    const filename = `${safeTitle}_${fileToDownload.resolution || 'HD'}.${ext}`;
+
+    // Create anchor and dispatch click on real user gesture
+    const a = document.createElement('a');
+    a.href = fileToDownload.url;
+    a.download = filename;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+    }, 1000);
+
+    setDownloadCompleted(true);
+    addToast({
+      type: 'success',
+      title: 'Download Started!',
+      message: `Saving "${filename}" to your device Downloads folder / Files app.`
+    });
+  };
+
+  // Live Simulated High-Speed Transfer
   useEffect(() => {
     let interval;
     if (isDownloading && !isPaused && downloadProgress < 100) {
       interval = setInterval(() => {
         setDownloadProgress((prev) => {
-          const next = prev + Math.floor(Math.random() * 8 + 3);
+          const next = prev + Math.floor(Math.random() * 9 + 4);
           if (next >= 100) {
             clearInterval(interval);
             setDownloadCompleted(true);
@@ -186,28 +257,30 @@ export default function DownloadModal({ movie, onClose }) {
             audioService.playSuccess();
             addToast({
               type: 'success',
-              title: 'Download Ready!',
-              message: `${currentMovie.title} (${selectedResolution?.resolution}) file has been generated.`
+              title: 'Download Complete!',
+              message: `${currentMovie.title} (${selectedResolution?.resolution}) file generated and saved.`
             });
             // Record download in analytics
             dbService.recordDownload(currentMovie.id, selectedResolution?.resolution);
             
-            // Actual file download trigger
+            // Trigger actual browser download
             if (selectedResolution?.url) {
               const link = document.createElement('a');
               link.href = selectedResolution.url;
               link.target = '_blank';
-              link.download = `${currentMovie.title.replace(/\s+/g, '_')}_${selectedResolution.resolution}.mp4`;
+              link.download = `${(currentMovie.title || 'Movie').replace(/\s+/g, '_')}_${selectedResolution.resolution}.mp4`;
               document.body.appendChild(link);
               link.click();
-              document.body.removeChild(link);
+              setTimeout(() => {
+                document.body.removeChild(link);
+              }, 1000);
             }
             return 100;
           }
-          setDownloadSpeed(`${(Math.random() * 5 + 16).toFixed(1)} MB/s`);
+          setDownloadSpeed(`${(Math.random() * 6 + 22).toFixed(1)} MB/s`);
           return next;
         });
-      }, 350);
+      }, 300);
     }
     return () => clearInterval(interval);
   }, [isDownloading, isPaused, downloadProgress, currentMovie, selectedResolution, addToast]);
@@ -279,7 +352,7 @@ export default function DownloadModal({ movie, onClose }) {
 
   const files = currentMovie.downloadFiles || [];
 
-  const handleStartDownload = () => {
+  const handleStartDownloadSimulation = () => {
     if (!confirmedLicense) {
       addToast({
         type: 'warning',
@@ -347,9 +420,23 @@ export default function DownloadModal({ movie, onClose }) {
           )}
         </div>
 
+        {/* Device Compatibility Badge */}
+        <div className="mt-4 p-3 rounded-2xl bg-zinc-900/60 border border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 text-zinc-300">
+            <Laptop className="w-4 h-4 text-cine-cyan" />
+            <span>Mac / Windows PC Ready</span>
+            <span className="text-zinc-600">•</span>
+            <Smartphone className="w-4 h-4 text-emerald-400" />
+            <span>iPhone / Android Ready</span>
+          </div>
+          <span className="text-[11px] text-zinc-400 font-medium">
+            Files save straight to your device Downloads / Files app
+          </span>
+        </div>
+
         {/* ADMIN UPLOAD PANEL (From Downloads) */}
         {isAdmin && showAdminUpload && (
-          <div className="mt-6 p-5 rounded-2xl bg-gradient-to-br from-cine-purple/15 to-cine-red/10 border border-cine-purple/30 space-y-4 animate-in slide-in-from-top-3">
+          <div className="mt-4 p-5 rounded-2xl bg-gradient-to-br from-cine-purple/15 to-cine-red/10 border border-cine-purple/30 space-y-4 animate-in slide-in-from-top-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-bold text-white uppercase tracking-wider">
                 <Sparkles className="w-4 h-4 text-cine-purple" />
@@ -376,7 +463,7 @@ export default function DownloadModal({ movie, onClose }) {
                   {uploadedFileName ? (
                     <span className="text-emerald-400">Selected: {uploadedFileName}</span>
                   ) : (
-                    'Click to select movie file from your computer / Downloads'
+                    'Click to select movie file from your Mac / Downloads'
                   )}
                 </div>
                 <p className="text-[11px] text-zinc-400 mt-1">
@@ -477,14 +564,14 @@ export default function DownloadModal({ movie, onClose }) {
         )}
 
         {/* Resolution Options Grid */}
-        <div className="mt-6">
+        <div className="mt-5">
           <div className="flex items-center justify-between mb-3">
             <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Select Resolution & File Format:
+              Select Resolution & File Quality:
             </label>
             {isAdmin && (
               <span className="text-[10px] text-zinc-500">
-                Admin controls: Trash icon deletes specific resolution
+                Admin: Trash icon deletes specific resolution
               </span>
             )}
           </div>
@@ -554,7 +641,7 @@ export default function DownloadModal({ movie, onClose }) {
 
         {/* Live Download Progress View */}
         {isDownloading || downloadCompleted ? (
-          <div className="mt-6 p-4 rounded-xl bg-zinc-900/90 border border-cine-red/30 space-y-3">
+          <div className="mt-5 p-4 rounded-xl bg-zinc-900/90 border border-cine-red/30 space-y-3">
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-white flex items-center gap-2">
                 {downloadCompleted ? (
@@ -597,7 +684,7 @@ export default function DownloadModal({ movie, onClose }) {
           </div>
         ) : (
           /* Confirmation Checkbox */
-          <div className="mt-6 p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+          <div className="mt-5 p-3.5 rounded-xl bg-white/5 border border-white/10 space-y-1.5">
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -614,41 +701,57 @@ export default function DownloadModal({ movie, onClose }) {
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-white/10">
-          <button
-            onClick={onClose}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-full glass-panel hover:bg-white/10 text-zinc-300 hover:text-white text-sm font-medium transition-colors"
-          >
-            {downloadCompleted ? 'Done' : 'Cancel'}
-          </button>
+        {/* Action Buttons: Direct Download (Instant) + Fast Transfer */}
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-white/10">
+          <div className="text-[11px] text-zinc-400 flex items-center gap-1.5 w-full sm:w-auto">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+            <span>High-Speed DRM-Free Direct Link</span>
+          </div>
 
-          {!downloadCompleted && (
+          <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
             <button
-              onClick={handleStartDownload}
-              disabled={isDownloading || !selectedResolution}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-full font-semibold text-sm transition-all shadow-glow-red ${
-                isDownloading || !selectedResolution
-                  ? 'bg-zinc-700 text-zinc-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-cine-red to-cine-purple hover:scale-105 active:scale-95 text-white'
-              }`}
+              onClick={onClose}
+              className="w-full sm:w-auto px-4 py-2.5 rounded-full glass-panel hover:bg-white/10 text-zinc-300 hover:text-white text-xs font-medium transition-colors"
+            >
+              {downloadCompleted ? 'Done' : 'Close'}
+            </button>
+
+            {/* PRIMARY: Instant Direct Download to Device (Laptop or Phone) */}
+            <button
+              onClick={() => triggerDirectDeviceDownload(selectedResolution)}
+              disabled={!selectedResolution}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-cine-purple hover:scale-105 active:scale-95 text-white font-bold text-xs shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all"
             >
               <Download className="w-4 h-4" />
-              <span>{isDownloading ? 'Transferring File...' : `Download ${selectedResolution?.resolution || ''}`}</span>
+              <span>Direct Download ({selectedResolution?.resolution || 'HD'})</span>
             </button>
-          )}
 
-          {downloadCompleted && (
-            <a
-              href={selectedResolution?.url}
-              target="_blank"
-              rel="noreferrer"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-transform hover:scale-105"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span>Direct Link Download</span>
-            </a>
-          )}
+            {/* SECONDARY: High-speed transfer simulator */}
+            {!downloadCompleted && !isDownloading && (
+              <button
+                onClick={handleStartDownloadSimulation}
+                disabled={!selectedResolution}
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-zinc-200 text-xs font-semibold transition-all"
+              >
+                <Play className="w-3.5 h-3.5" />
+                <span>Simulated Transfer</span>
+              </button>
+            )}
+
+            {/* Direct Link in New Tab */}
+            {selectedResolution?.url && (
+              <a
+                href={selectedResolution.url}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="w-full sm:w-auto p-2.5 rounded-full glass-panel hover:bg-white/15 text-zinc-300 hover:text-white transition-colors"
+                title="Open Direct Video Stream / Download in New Tab"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>

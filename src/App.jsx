@@ -5,6 +5,7 @@ import ParticleCanvas from './components/3d/ParticleCanvas';
 import TrailerModal from './components/common/TrailerModal';
 import DownloadModal from './components/download/DownloadModal';
 import AuthModal from './components/common/AuthModal';
+import UploadMovieModal from './components/admin/UploadMovieModal';
 import Home from './pages/Home';
 import MovieDetails from './pages/MovieDetails';
 import Explore from './pages/Explore';
@@ -28,6 +29,8 @@ export default function App() {
   const [activeTrailerMovie, setActiveTrailerMovie] = useState(null);
   const [activeDownloadMovie, setActiveDownloadMovie] = useState(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [targetUploadMovie, setTargetUploadMovie] = useState(null);
 
   // Theme
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -111,6 +114,11 @@ export default function App() {
     setIsDarkMode((prev) => !prev);
   };
 
+  const handleOpenUpload = (target = null) => {
+    setTargetUploadMovie(target);
+    setIsUploadModalOpen(true);
+  };
+
   return (
     <div className="relative min-h-screen bg-background text-zinc-100 flex flex-col font-sans transition-colors duration-500">
       
@@ -125,6 +133,7 @@ export default function App() {
         onOpenLogin={() => setIsAuthModalOpen(true)}
         isDarkMode={isDarkMode}
         onToggleTheme={handleToggleTheme}
+        onOpenUpload={() => handleOpenUpload(null)}
       />
 
       {/* Main View Router */}
@@ -135,6 +144,7 @@ export default function App() {
             onViewDetails={(id) => navigateTo('movie', id)}
             onPlayTrailer={(movie) => setActiveTrailerMovie(movie)}
             onOpenDownload={(movie) => setActiveDownloadMovie(movie)}
+            onOpenUpload={handleOpenUpload}
             watchlist={watchlist}
             onToggleWatchlist={handleToggleWatchlist}
             onNavigate={navigateTo}
@@ -147,6 +157,7 @@ export default function App() {
             onNavigate={navigateTo}
             onPlayTrailer={(movie) => setActiveTrailerMovie(movie)}
             onOpenDownload={(movie) => setActiveDownloadMovie(movie)}
+            onOpenUpload={handleOpenUpload}
             watchlist={watchlist}
             onToggleWatchlist={handleToggleWatchlist}
           />
@@ -224,6 +235,16 @@ export default function App() {
           onClose={() => setActiveDownloadMovie(null)}
         />
       )}
+
+      {/* Dedicated Mac Downloads Movie Uploader Modal */}
+      <UploadMovieModal
+        isOpen={isUploadModalOpen}
+        onClose={() => {
+          setIsUploadModalOpen(false);
+          setTargetUploadMovie(null);
+        }}
+        targetMovie={targetUploadMovie}
+      />
 
       <AuthModal
         isOpen={isAuthModalOpen}
