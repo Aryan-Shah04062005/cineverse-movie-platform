@@ -115,6 +115,16 @@ export default function App() {
   };
 
   const handleOpenUpload = (target = null) => {
+    const user = authService.getCurrentUser();
+    if (user?.role !== 'admin') {
+      addToast({
+        type: 'info',
+        title: 'Admin Access Required',
+        message: 'Movie upload feature is restricted to administrator Aryan Shah.'
+      });
+      setIsAuthModalOpen(true);
+      return;
+    }
     setTargetUploadMovie(target);
     setIsUploadModalOpen(true);
   };

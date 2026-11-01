@@ -226,17 +226,19 @@ export default function MovieDetails({
                 </button>
               )}
 
-              {/* Upload Movie from Mac Action Button */}
-              <button
-                onClick={() => {
-                  audioService.playClick();
-                  onOpenUpload ? onOpenUpload(movie) : onOpenDownload(movie);
-                }}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-cine-purple/20 hover:bg-cine-purple/30 text-cine-purple border border-cine-purple/40 text-xs font-semibold transition-all hover:scale-[1.02] active:scale-95 shadow-glow-purple"
-              >
-                <Upload className="w-4 h-4" />
-                <span>Upload Movie from Mac Downloads</span>
-              </button>
+              {/* Admin-Only Upload Movie Action Button */}
+              {authService.getCurrentUser()?.role === 'admin' && (
+                <button
+                  onClick={() => {
+                    audioService.playClick();
+                    onOpenUpload ? onOpenUpload(movie) : onOpenDownload(movie);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-cine-purple/20 hover:bg-cine-purple/30 text-cine-purple border border-cine-purple/40 text-xs font-semibold transition-all hover:scale-[1.02] active:scale-95 shadow-glow-purple"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Admin: Upload / Attach Movie File</span>
+                </button>
+              )}
 
               {/* Utility Row: Watchlist, Favorite, Share */}
               <div className="grid grid-cols-3 gap-2 pt-1">

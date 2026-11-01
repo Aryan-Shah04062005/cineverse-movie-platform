@@ -69,59 +69,6 @@ export default function Home({
       {/* Main Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20 mt-10">
 
-        {/* Mac Downloads Uploader Feature Showcase Banner */}
-        <section className="relative rounded-3xl overflow-hidden glass-panel border border-cine-purple/40 p-6 sm:p-8 bg-gradient-to-r from-cine-purple/15 via-background/60 to-cine-red/15 shadow-2xl">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="space-y-2 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-cine-purple/20 text-cine-purple border border-cine-purple/30">
-                <FolderDown className="w-3.5 h-3.5" />
-                <span>Mac Media Importer • ~/Downloads</span>
-              </div>
-              <h2 className="font-cinematic font-bold text-2xl sm:text-3xl text-white">
-                Upload Full Movies from Mac Downloads
-              </h2>
-              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-                Have video files on your Mac? Easily upload movie files (.mp4, .mkv, .mov) directly from your <strong className="text-white">Downloads</strong> folder. Once uploaded, any user on a <strong className="text-white">Laptop or Phone</strong> can download and stream them instantly in high quality!
-              </p>
-              <div className="flex items-center gap-4 text-xs text-zinc-400 pt-1">
-                <span className="flex items-center gap-1.5 text-zinc-300">
-                  <Laptop className="w-3.5 h-3.5 text-cine-cyan" />
-                  <span>Mac / PC Direct Save</span>
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1.5 text-zinc-300">
-                  <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>iPhone / Android Ready</span>
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-shrink-0">
-              <button
-                onClick={() => {
-                  audioService.playClick();
-                  onOpenUpload?.();
-                }}
-                className="px-6 py-3 rounded-full bg-gradient-to-r from-cine-purple to-cine-red hover:from-purple-500 hover:to-rose-500 text-white font-bold text-xs shadow-glow-purple hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                <Upload className="w-4 h-4" />
-                <span>Upload Movie from Mac Downloads</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  audioService.playClick();
-                  onNavigate?.('admin');
-                }}
-                className="px-5 py-3 rounded-full glass-panel hover:bg-white/10 text-zinc-300 hover:text-white font-semibold text-xs border border-white/10 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <Shield className="w-4 h-4 text-cine-purple" />
-                <span>Admin Portal</span>
-              </button>
-            </div>
-          </div>
-        </section>
-
         {/* 2. Trending Movies 3D Horizontal Carousel */}
         <section>
           <div className="flex items-end justify-between mb-6">

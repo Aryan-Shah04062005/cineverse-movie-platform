@@ -23,7 +23,9 @@ import {
   Upload,
   FolderDown,
   FileVideo,
-  Check
+  Check,
+  RefreshCw,
+  Globe
 } from 'lucide-react';
 import { dbService } from '../services/dbService';
 import { authService } from '../services/authService';
@@ -83,13 +85,20 @@ export default function Admin({ onNavigate }) {
     trending: true
   };
   const [formData, setFormData] = useState(initialForm);
+  const [syncStatus, setSyncStatus] = useState(dbService.getSyncStatus());
 
   useEffect(() => {
     const unsub = dbService.subscribe((updated) => {
       setMovies(updated);
       setAnalytics(dbService.getAnalytics());
     });
-    return unsub;
+    const unsubSync = dbService.subscribeSyncStatus((status) => {
+      setSyncStatus(status);
+    });
+    return () => {
+      unsub();
+      unsubSync();
+    };
   }, []);
 
   const handleUnlockAdmin = (e) => {
@@ -226,7 +235,8 @@ export default function Admin({ onNavigate }) {
       size: quickSize,
       bitrate: quickRes.includes('4K') ? '22.0 Mbps' : '8.5 Mbps',
       audio: 'Dolby 5.1 Surround',
-      url: quickUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+      url: quickUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+      fallbackUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
     };
 
     const existingFiles = targetMovie.downloadFiles || [];
@@ -265,7 +275,8 @@ export default function Admin({ onNavigate }) {
       size: quickSize,
       bitrate: quickRes.includes('4K') ? '22.0 Mbps' : '8.5 Mbps',
       audio: 'Dolby 5.1 Surround',
-      url: quickUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
+      url: quickUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+      fallbackUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4'
     };
 
     setFormData({
@@ -463,11 +474,49 @@ export default function Admin({ onNavigate }) {
               CINEVERSE Admin Dashboard
             </h1>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Live updates directly synchronize with LocalDB storage and persist across page refreshes.
+              Live updates automatically synchronize across all devices via high-speed Cloud Database.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Real-time Cloud DB Sync Badge */}
+            <div
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-mono transition-all ${
+                syncStatus.cloudConnected
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  syncStatus.isSyncing
+                    ? 'bg-amber-400 animate-ping'
+                    : syncStatus.cloudConnected
+                    ? 'bg-emerald-400'
+                    : 'bg-amber-400'
+                }`}
+              />
+              <span className="font-semibold">
+                {syncStatus.isSyncing ? 'Syncing...' : syncStatus.cloudConnected ? 'Cloud DB Live' : 'Offline Cache'}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  audioService.playClick();
+                  dbService.forceSync();
+                  addToast({
+                    type: 'info',
+                    title: 'Cloud Sync Triggered',
+                    message: 'Synchronizing catalog across all user devices...'
+                  });
+                }}
+                title="Force refresh from Cloud DB"
+                className="ml-1 hover:text-white p-0.5 rounded transition-colors"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${syncStatus.isSyncing ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
+
             <button
               onClick={handleAdminLock}
               title="Lock and sign out of admin console"

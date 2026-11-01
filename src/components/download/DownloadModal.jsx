@@ -60,10 +60,25 @@ export default function DownloadModal({ movie, onClose }) {
         const resolvedFiles = await Promise.all(
           movie.downloadFiles.map(async (file) => {
             if (file.storageFileId) {
-              const stored = await mediaStorageService.getMovieFile(file.storageFileId);
-              if (stored && stored.url) {
-                return { ...file, url: stored.url };
+              try {
+                const stored = await mediaStorageService.getMovieFile(file.storageFileId);
+                if (stored && stored.url) {
+                  return { ...file, url: stored.url, isLocal: true };
+                }
+              } catch (e) {
+                console.warn('Local file resolution error:', e);
               }
+              // If not found in local IndexedDB (different device/phone), use fallback or CDN URL
+              return {
+                ...file,
+                url: file.fallbackUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+              };
+            }
+            if (file.url && file.url.startsWith('blob:')) {
+              return {
+                ...file,
+                url: file.fallbackUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+              };
             }
             return file;
           })

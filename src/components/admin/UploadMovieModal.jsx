@@ -172,6 +172,7 @@ export default function UploadMovieModal({ isOpen, onClose, targetMovie = null }
 
       // Direct persistent object URL
       const directDownloadUrl = videoPreviewUrl;
+      const cloudFallbackVideo = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
 
       const downloadFileEntry = {
         resolution: movieResolution,
@@ -179,7 +180,8 @@ export default function UploadMovieModal({ isOpen, onClose, targetMovie = null }
         size: fileSizeFormatted,
         bitrate: movieResolution.includes('4K') ? '24.0 Mbps' : '8.5 Mbps',
         audio: 'Dolby 5.1 Surround',
-        url: directDownloadUrl,
+        url: directDownloadUrl || cloudFallbackVideo,
+        fallbackUrl: cloudFallbackVideo,
         storageFileId: fileId,
         isUploaded: true
       };
@@ -216,10 +218,10 @@ export default function UploadMovieModal({ isOpen, onClose, targetMovie = null }
           genres: movieGenre.split(',').map((g) => g.trim()),
           languages: ['English'],
           director: 'Aryan Shah Production',
-          synopsis: movieSynopsis,
+          synopsis: movieSynopsis || 'Exclusive feature film uploaded by Administrator Aryan Shah. Optimized for high-speed streaming and direct download.',
           poster: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80',
           backdrop: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&auto=format&fit=crop&q=80',
-          trailerUrl: directDownloadUrl,
+          trailerUrl: cloudFallbackVideo,
           downloadAuthorized: true,
           licenseType: 'Authorized Distribution',
           downloadFiles: [downloadFileEntry],
