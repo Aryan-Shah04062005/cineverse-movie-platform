@@ -2,7 +2,9 @@
 
 > A futuristic, professional OTT entertainment and discovery platform designed with cinematic 3D effects, glassmorphic UI, an authorized public-domain and Creative Commons download engine, user account personalization, and a persistent Admin CMS.
 
-🌐 **Live Website Link**: [https://cineverse-aryan.surge.sh](https://cineverse-aryan.surge.sh)
+🌐 **Live GitHub Pages Website**: [https://aryan-shah04062005.github.io/cineverse-movie-platform/](https://aryan-shah04062005.github.io/cineverse-movie-platform/)
+⚡ **High-Speed Global Mirror**: [https://cineverse-aryan.surge.sh](https://cineverse-aryan.surge.sh)
+📁 **GitHub Repository**: [https://github.com/Aryan-Shah04062005/cineverse-movie-platform](https://github.com/Aryan-Shah04062005/cineverse-movie-platform)
 
 ---
 
