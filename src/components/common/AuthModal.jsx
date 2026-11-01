@@ -26,6 +26,16 @@ export default function AuthModal({ isOpen, onClose }) {
     }
 
     const user = authService.login(email, password);
+    if (!user) {
+      audioService.playClick();
+      addToast({
+        type: 'error',
+        title: 'Authentication Failed',
+        message: 'Invalid credentials. For Admin Aryan Shah, please enter password Aryan@1234.'
+      });
+      return;
+    }
+
     if (name && isSignUp) {
       authService.updateProfile({ name });
     }
@@ -40,14 +50,14 @@ export default function AuthModal({ isOpen, onClose }) {
   };
 
   const handleQuickAdmin = () => {
-    const admin = authService.loginAsAdmin();
-    audioService.playSuccess();
+    setEmail('Aryan Shah');
+    setPassword('Aryan@1234');
+    audioService.playClick();
     addToast({
-      type: 'success',
-      title: 'Admin Access Granted',
-      message: `Signed in as ${admin.name} with Administrator rights.`
+      type: 'info',
+      title: 'Admin Credentials Filled',
+      message: 'Click "Sign In" below to verify and unlock Administrator access.'
     });
-    onClose();
   };
 
   const handleQuickMember = () => {

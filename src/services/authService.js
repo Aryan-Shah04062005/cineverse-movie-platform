@@ -29,32 +29,33 @@ export const authService = {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_USER);
       if (!raw) {
-        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(DEFAULT_ADMIN_USER));
-        return DEFAULT_ADMIN_USER;
+        return null; // Default to unauthenticated/guest
       }
       return JSON.parse(raw);
     } catch {
-      return DEFAULT_ADMIN_USER;
+      return null;
     }
   },
 
   login(identifier, password) {
     const cleanId = (identifier || '').trim().toLowerCase();
-    const isAryanAdmin = 
-      (cleanId === 'aryan shah' || cleanId === 'aryan' || cleanId === 'aryan.shah@cineverse.io' || cleanId.includes('admin')) &&
-      (password === 'Aryan@1234' || password === 'admin');
+    const isAryan = 
+      cleanId === 'aryan shah' || cleanId === 'aryan' || cleanId === 'aryan.shah@cineverse.io' || cleanId === 'admin';
 
-    if (isAryanAdmin) {
-      const admin = {
-        ...DEFAULT_ADMIN_USER,
-        role: 'admin'
-      };
-      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(admin));
-      dispatchChange();
-      return admin;
+    if (isAryan) {
+      if (password === 'Aryan@1234') {
+        const admin = {
+          ...DEFAULT_ADMIN_USER,
+          role: 'admin'
+        };
+        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(admin));
+        dispatchChange();
+        return admin;
+      } else {
+        return null; // Reject login if password is not Aryan@1234
+      }
     }
 
-    const isAdmin = cleanId.includes('admin');
     const user = {
       id: `usr-${Date.now()}`,
       name: identifier.includes('@')
@@ -62,7 +63,7 @@ export const authService = {
         : identifier,
       email: identifier.includes('@') ? identifier : `${cleanId.replace(/\s+/g, '.')}@cineverse.io`,
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-      role: isAdmin ? 'admin' : 'user',
+      role: 'user',
       plan: 'Cineverse Pro HD',
       joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     };
@@ -72,17 +73,31 @@ export const authService = {
   },
 
   loginAsGuest() {
-    return this.login('guest@cineverse.io', 'guest');
+    const guestUser = {
+      id: 'usr-guest-01',
+      name: 'Guest Member',
+      email: 'guest@cineverse.io',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+      role: 'user',
+      plan: 'Cineverse Free Explorer',
+      joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    };
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(guestUser));
+    dispatchChange();
+    return guestUser;
   },
 
-  loginAsAdmin() {
-    const adminUser = {
-      ...DEFAULT_ADMIN_USER,
-      role: 'admin'
-    };
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(adminUser));
-    dispatchChange();
-    return adminUser;
+  loginAsAdmin(password) {
+    if (password === 'Aryan@1234') {
+      const adminUser = {
+        ...DEFAULT_ADMIN_USER,
+        role: 'admin'
+      };
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(adminUser));
+      dispatchChange();
+      return adminUser;
+    }
+    return null;
   },
 
   logout() {

@@ -48,9 +48,12 @@ export default function Admin({ onNavigate }) {
   const [quickUrl, setQuickUrl] = useState('');
   const quickFileRef = useRef(null);
 
-  // Admin access unlock state
-  const [isAdminUnlocked, setIsAdminUnlocked] = useState(currentUser?.role === 'admin');
-  const [adminUsername, setAdminUsername] = useState('Aryan Shah');
+  // Admin access unlock state: NEVER open without explicit login!
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(() => {
+    return sessionStorage.getItem('cineverse_admin_session_unlocked') === 'true' &&
+           authService.getCurrentUser()?.role === 'admin';
+  });
+  const [adminUsername, setAdminUsername] = useState('');
   const [adminPin, setAdminPin] = useState('');
 
   // Modals
@@ -92,25 +95,40 @@ export default function Admin({ onNavigate }) {
   const handleUnlockAdmin = (e) => {
     e.preventDefault();
     const cleanUser = (adminUsername || '').trim().toLowerCase();
-    const isUserValid = cleanUser === 'aryan shah' || cleanUser === 'aryan' || cleanUser === 'admin' || cleanUser === 'aryan.shah@cineverse.io';
-    const isPassValid = adminPin === 'Aryan@1234' || adminPin === 'admin' || adminPin === 'cineverse2026' || adminPin === '1234';
+    const isUserValid = cleanUser === 'aryan shah' || cleanUser === 'aryan' || cleanUser === 'aryan.shah@cineverse.io';
+    const isPassValid = adminPin === 'Aryan@1234';
 
     if (isUserValid && isPassValid) {
       authService.login('Aryan Shah', 'Aryan@1234');
+      sessionStorage.setItem('cineverse_admin_session_unlocked', 'true');
       setIsAdminUnlocked(true);
       audioService.playSuccess();
       addToast({
         type: 'success',
-        title: 'Admin Unlocked',
-        message: 'Welcome back, Administrator Aryan Shah. Access granted.'
+        title: 'Admin Access Granted',
+        message: 'Welcome back, Administrator Aryan Shah. Full management controls unlocked.'
       });
     } else {
+      audioService.playClick();
       addToast({
         type: 'error',
-        title: 'Authentication Failed',
-        message: 'Incorrect Admin username or password. Please verify credentials.'
+        title: 'Access Denied',
+        message: 'Invalid credentials. Only Administrator Aryan Shah can access this dashboard.'
       });
     }
+  };
+
+  const handleAdminLock = () => {
+    audioService.playClick();
+    sessionStorage.removeItem('cineverse_admin_session_unlocked');
+    setIsAdminUnlocked(false);
+    setAdminPin('');
+    setAdminUsername('');
+    addToast({
+      type: 'info',
+      title: 'Admin Dashboard Locked',
+      message: 'Session ended. Dashboard is now locked.'
+    });
   };
 
   // Add Movie
@@ -421,9 +439,9 @@ export default function Admin({ onNavigate }) {
             </button>
           </form>
 
-          <div className="text-[11px] text-zinc-500 bg-white/5 p-3 rounded-xl border border-white/5 text-center">
-            Authorized Admin: <strong className="text-zinc-200">Aryan Shah</strong> • Password:{' '}
-            <strong className="text-zinc-200">Aryan@1234</strong>
+          <div className="text-[11px] text-zinc-500 bg-white/5 p-3 rounded-xl border border-white/5 text-center flex items-center justify-center gap-2">
+            <Lock className="w-3.5 h-3.5 text-zinc-400" />
+            <span>Secure Role-Based Authentication Required</span>
           </div>
         </div>
       </div>
@@ -450,6 +468,15 @@ export default function Admin({ onNavigate }) {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={handleAdminLock}
+              title="Lock and sign out of admin console"
+              className="px-4 py-2 rounded-full bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-xs text-rose-300 font-semibold flex items-center gap-1.5 transition-all shadow-lg"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Lock Dashboard</span>
+            </button>
+
             <button
               onClick={handleResetCatalog}
               title="Reset to default seed catalog"
