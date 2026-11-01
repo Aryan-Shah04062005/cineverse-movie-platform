@@ -31,7 +31,7 @@ export default function AuthModal({ isOpen, onClose }) {
       addToast({
         type: 'error',
         title: 'Authentication Failed',
-        message: 'Invalid credentials. For Admin Aryan Shah, please enter password Aryan@1234.'
+        message: 'Invalid email or password. Please check your credentials and try again.'
       });
       return;
     }
@@ -47,17 +47,6 @@ export default function AuthModal({ isOpen, onClose }) {
       message: `Logged in as ${user.name} (${user.role === 'admin' ? 'Administrator' : 'Premium Member'})`
     });
     onClose();
-  };
-
-  const handleQuickAdmin = () => {
-    setEmail('Aryan Shah');
-    setPassword('Aryan@1234');
-    audioService.playClick();
-    addToast({
-      type: 'info',
-      title: 'Admin Credentials Filled',
-      message: 'Click "Sign In" below to verify and unlock Administrator access.'
-    });
   };
 
   const handleQuickMember = () => {
@@ -223,30 +212,19 @@ export default function AuthModal({ isOpen, onClose }) {
               </button>
             </div>
 
-            {/* Quick Demo Credentials */}
+            {/* Quick Guest Access */}
             <div className="pt-4 border-t border-white/10 space-y-2">
               <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-500 text-center">
-                Instant 1-Click Demo Login
+                Instant Guest Preview
               </span>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={handleQuickAdmin}
-                  className="p-2 rounded-xl bg-cine-purple/15 hover:bg-cine-purple/25 border border-cine-purple/30 text-cine-purple text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <Shield className="w-3.5 h-3.5" />
-                  <span>Admin (Aryan Shah)</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleQuickMember}
-                  className="p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <User className="w-3.5 h-3.5" />
-                  <span>VIP Guest</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={handleQuickMember}
+                className="w-full p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-zinc-300 text-xs font-semibold flex items-center justify-center gap-2 transition-colors"
+              >
+                <User className="w-4 h-4 text-cine-purple" />
+                <span>Continue as Guest Explorer</span>
+              </button>
             </div>
           </form>
         )}

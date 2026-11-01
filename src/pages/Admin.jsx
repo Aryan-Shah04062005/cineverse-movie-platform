@@ -113,7 +113,7 @@ export default function Admin({ onNavigate }) {
       addToast({
         type: 'error',
         title: 'Access Denied',
-        message: 'Invalid credentials. Only Administrator Aryan Shah can access this dashboard.'
+        message: 'Invalid administrative credentials. Access denied.'
       });
     }
   };
@@ -413,7 +413,7 @@ export default function Admin({ onNavigate }) {
               <label className="block text-xs font-semibold text-zinc-300 mb-1">Admin Username</label>
               <input
                 type="text"
-                placeholder="Aryan Shah"
+                placeholder="Enter admin username"
                 value={adminUsername}
                 onChange={(e) => setAdminUsername(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl text-xs glass-input"
@@ -424,7 +424,7 @@ export default function Admin({ onNavigate }) {
               <label className="block text-xs font-semibold text-zinc-300 mb-1">Admin Password</label>
               <input
                 type="password"
-                placeholder="Aryan@1234"
+                placeholder="••••••••••••"
                 value={adminPin}
                 onChange={(e) => setAdminPin(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl text-xs glass-input"

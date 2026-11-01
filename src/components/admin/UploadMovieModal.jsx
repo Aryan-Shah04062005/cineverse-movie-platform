@@ -24,6 +24,7 @@ export default function UploadMovieModal({ isOpen, onClose, targetMovie = null }
   const isAdmin = currentUser?.role === 'admin';
 
   // Admin authentication if not already logged in
+  const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [authError, setAuthError] = useState('');
 
@@ -67,7 +68,9 @@ export default function UploadMovieModal({ isOpen, onClose, targetMovie = null }
   // Handle Quick Admin Auth
   const handleQuickLogin = (e) => {
     e.preventDefault();
-    if (adminPassword === 'Aryan@1234') {
+    const cleanUser = (adminUsername || '').trim().toLowerCase();
+    const isUserValid = cleanUser === 'aryan shah' || cleanUser === 'aryan' || cleanUser === 'aryan.shah@cineverse.io';
+    if (isUserValid && adminPassword === 'Aryan@1234') {
       const user = authService.login('Aryan Shah', 'Aryan@1234');
       setCurrentUser(user);
       sessionStorage.setItem('cineverse_admin_session_unlocked', 'true');
@@ -76,10 +79,10 @@ export default function UploadMovieModal({ isOpen, onClose, targetMovie = null }
       addToast({
         type: 'success',
         title: 'Admin Verified',
-        message: 'Welcome Aryan Shah. You can now upload full movies directly.'
+        message: 'Administrative access verified. You can now upload full movies.'
       });
     } else {
-      setAuthError('Incorrect password. Please enter Aryan@1234 to proceed.');
+      setAuthError('Incorrect username or password.');
       audioService.playClick();
     }
   };
@@ -298,9 +301,11 @@ export default function UploadMovieModal({ isOpen, onClose, targetMovie = null }
                 <label className="block text-[11px] text-zinc-400 mb-1">Admin Username</label>
                 <input
                   type="text"
-                  disabled
-                  value="Aryan Shah"
-                  className="w-full px-3 py-2 rounded-xl text-xs glass-input opacity-80"
+                  placeholder="Enter admin username"
+                  value={adminUsername}
+                  onChange={(e) => setAdminUsername(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl text-xs glass-input"
+                  autoFocus
                 />
               </div>
 
@@ -308,11 +313,10 @@ export default function UploadMovieModal({ isOpen, onClose, targetMovie = null }
                 <label className="block text-[11px] text-zinc-400 mb-1">Admin Password</label>
                 <input
                   type="password"
-                  placeholder="Aryan@1234"
+                  placeholder="••••••••••••"
                   value={adminPassword}
                   onChange={(e) => setAdminPassword(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl text-xs glass-input"
-                  autoFocus
                 />
               </div>
 
