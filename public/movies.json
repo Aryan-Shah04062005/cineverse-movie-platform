@@ -1,35 +1,6 @@
 {
   "movies": [
     {
-      "id": "test-admin-upload-1793534033587",
-      "title": "Mission Cineverse: Zero Latency",
-      "year": 2026,
-      "rating": 9.9,
-      "duration": "2h 10m",
-      "genres": [
-        "Sci-Fi",
-        "Action"
-      ],
-      "languages": [
-        "English"
-      ],
-      "director": "Aryan Shah",
-      "synopsis": "Admin real-time cloud synchronization test movie.",
-      "poster": "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800&auto=format&fit=crop&q=80",
-      "backdrop": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&auto=format&fit=crop&q=80",
-      "trailerUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      "downloadAuthorized": true,
-      "downloadFiles": [
-        {
-          "resolution": "1080p",
-          "format": "MP4",
-          "size": "1.4 GB",
-          "url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-        }
-      ],
-      "createdAt": "2026-11-01T11:53:53.587Z"
-    },
-    {
       "id": "tears-of-steel",
       "title": "Tears of Steel",
       "tagline": "Explore a dystopian future where science and emotion collide.",
@@ -1084,6 +1055,6 @@
       "downloadFiles": []
     }
   ],
-  "lastUpdated": "2026-11-01T11:53:53.588Z",
+  "lastUpdated": "2026-11-01T11:54:24.436Z",
   "updatedBy": "Aryan Shah (Admin)"
 }
